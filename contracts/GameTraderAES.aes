@@ -1,0 +1,45 @@
+payable contract GameTrader =
+   record game = {
+     owner : address,
+     title : string,
+     price : int,
+     creator: address,
+     forSale: bool,
+     photoUrl: string}
+
+   record state = {
+     games : map(int, game),
+     gamesLength : int}
+
+   entrypoint init() = {
+     games = {},
+     gamesLength = 0}
+
+   entrypoint getGames() : map(int, game) =
+     state.games
+
+   entrypoint getGame(index : int) : game =
+     switch(Map.lookup(index, state.games))
+       None => abort("Index does not exist")
+       Some(x) => x
+
+   stateful entrypoint addGame(title': string, price': int, photoUrl':string, forSale': bool) =
+     let game = { owner = Call.caller, creator = Call.caller, title = title', price = price', forSale = forSale', photoUrl = photoUrl'}
+     let index = getGamesLength() + 1
+     put(state { games[index] = game, gamesLength = index })
+
+   payable stateful entrypoint buyGame( id : int) =
+     let purchase = getGame(id)
+     if(Call.value >= purchase.price)
+      Chain.spend(purchase.owner, purchase.price)
+      let update = state.games{[id].owner = Call.caller, [id].forSale = false}
+      put(state {games = update})
+     else
+      abort("Balance too low")
+
+   stateful entrypoint updateGame(index : int, price' : int, forSale' : bool) =
+     let update = state.games{[index].price = price', [index].forSale = forSale'}
+     put(state {games = update})
+
+   entrypoint getGamesLength() : int =
+     state.gamesLength
