@@ -19,7 +19,6 @@ const Deployer = require('aeproject-lib').Deployer;
 const deploy = async (network, privateKey, compiler, networkId) => {
     let deployer = new Deployer(network, privateKey, compiler, networkId)
 
-    await deployer.deploy("./contracts/ExampleContract.aes")
     await deployer.deploy("./contracts/GameTraderAES.aes")
 };
 
