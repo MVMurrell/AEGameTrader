@@ -1,6 +1,10 @@
+import { Aepp } from '@aeternity/aepp-sdk/';
 import { Component, OnInit } from '@angular/core';
 import * as _ from "lodash";
-import { Wallet} from '@aeternity/aepp-sdk/';
+import Wallet from '@aeternity/aepp-sdk/es/ae/wallet';
+import MemoryAccount from '@aeternity/aepp-sdk/es/account/memory';
+import { generateKeyPair } from '@aeternity/aepp-sdk/es/utils/crypto';
+import contractDetails from '../../../integrations/contractsAeppSettings.js'
 // import * as Contract from '@aeternity/aepp-sdk/es/ae/';
 
 
@@ -19,7 +23,18 @@ export class StoreFrontComponent implements OnInit {
 
   games: any;
 
-  wallet = Wallet
+  secretKey;
+
+  publicKey;
+
+  wallet;
+
+  balance;
+
+  client;
+
+  contractInstance;
+
 
   contractAddress = "ct_2vxCkM5hyFmQvyoJX4NWDyTLGtArCTqoRMfmaghtZETr2fM6h8";
 
@@ -27,7 +42,25 @@ export class StoreFrontComponent implements OnInit {
 
   ngOnInit() {
 
-    console.log(this.wallet);
+
+    this.client = Aepp;
+
+    this.contractInstance =  this.client.getContractInstance( contractDetails.contractSource, {contractAddress: contractDetails.contractAddress})
+    const keypair = generateKeyPair();
+    this.secretKey = keypair.secretKey;
+    this.publicKey = keypair.publicKey;
+
+    const w = Wallet({
+      url: 'https://sdk-testnet.aepps.com/',
+      accounts: [MemoryAccount({ keypair: { secretKey: this.secretKey.value, publicKey: this.publicKey.value } })],
+      address: this.publicKey.value,
+      onTx: confirm,
+      onChain: confirm,
+      onAccount: confirm,
+      onContract: confirm,
+    });
+
+    this.wallet = w
     // this.contractAddress;
     // function callStatic(func, args) {
     //   var that = this;
@@ -45,7 +78,7 @@ export class StoreFrontComponent implements OnInit {
     //   console.log('decodedGet', decodedGet)
     //   return decodedGet;
     // }
-
+    this.balance = w.getBalance(this.publicKey.value);
     this.sellGame = false;
     this.renderGames();
   }
@@ -62,5 +95,9 @@ export class StoreFrontComponent implements OnInit {
 
   openRegisterComp() {
     this.sellGame = true;
+  }
+
+  printKey(){
+    console.log(this.balance)
   }
 }
